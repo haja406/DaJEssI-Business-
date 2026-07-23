@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 40 20% 98%;
+  --foreground: 152 30% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 152 30% 12%;
+  --muted: 150 15% 95%;
+  --muted-foreground: 152 10% 40%;
+  --border: 150 15% 88%;
+  --destructive: 0 65% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --brand-pale: 150 30% 94%;
+  --gold-pale: 45 70% 92%;
+}
+
+.dark {
+  --background: 152 25% 8%;
+  --foreground: 40 20% 96%;
+  --card: 152 22% 11%;
+  --card-foreground: 40 20% 96%;
+  --muted: 152 18% 16%;
+  --muted-foreground: 150 10% 65%;
+  --border: 152 18% 20%;
+  --destructive: 0 60% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --brand-pale: 152 20% 16%;
+  --gold-pale: 45 30% 18%;
+}
+
+* { border-color: hsl(var(--border)); }
+body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+.font-tabular { font-variant-numeric: tabular-nums; }
+
+/* Native-feeling title bar drag region */
+.titlebar-drag { -webkit-app-region: drag; }
+.titlebar-no-drag { -webkit-app-region: no-drag; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: #cfd9d3; border-radius: 8px; }
+.dark ::-webkit-scrollbar-thumb { background-color: #2b3d34; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+}

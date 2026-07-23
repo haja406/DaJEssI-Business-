@@ -1,0 +1,119 @@
+{
+  "name": "dajessi-desktop",
+  "productName": "DaJEssI Business",
+  "version": "1.0.0",
+  "description": "Logiciel de gestion pour une entreprise de collecte de riz (Madagascar) — 100% hors-ligne.",
+  "author": "DaJEssy'Varotra",
+  "main": "dist-electron/main.js",
+  "private": true,
+  "scripts": {
+    "dev:vite": "vite",
+    "dev:server": "cross-env DATABASE_URL=file:./dev.db JWT_SECRET=dajessi-dev-secret PORT=4310 tsx watch server/src/index.ts",
+    "dev:electron": "wait-on http://localhost:5173 http://localhost:4310/api/health && npm run build:electron && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -k -n VITE,API,ELECTRON -c blue,green,magenta \"npm:dev:vite\" \"npm:dev:server\" \"npm:dev:electron\"",
+    "build:frontend": "tsc -p tsconfig.json && vite build",
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:electron": "tsc -p electron/tsconfig.json && npm run copy:assets",
+    "copy:assets": "node -e \"require('fs').copyFileSync('electron/splash.html','dist-electron/splash.html')\"",
+    "build": "npm run build:frontend && npm run build:server && npm run build:electron",
+    "prisma:generate": "prisma generate --schema=server/prisma/schema.prisma",
+    "prisma:migrate": "cross-env DATABASE_URL=file:./dev.db prisma migrate dev --schema=server/prisma/schema.prisma",
+    "prisma:seed": "cross-env DATABASE_URL=file:./dev.db tsx server/prisma/seed.ts",
+    "postinstall": "npm run prisma:generate",
+    "dist": "npm run build && electron-builder --win nsis portable",
+    "dist:dir": "npm run build && electron-builder --dir"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@prisma/client": "^5.20.0",
+    "@radix-ui/react-alert-dialog": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-select": "^2.1.1",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "electron-store": "^8.2.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.3",
+    "lucide-react": "^0.446.0",
+    "prisma": "^5.20.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.7",
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "electron": "^32.1.2",
+    "electron-builder": "^25.0.5",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "wait-on": "^8.0.0"
+  },
+  "build": {
+    "appId": "mg.dajessyvarotra.desktop",
+    "productName": "DaJEssI Business",
+    "copyright": "Copyright © 2026 DaJEssy'Varotra",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "dist-server/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/.prisma/**/*",
+      "node_modules/@prisma/client/**/*",
+      "node_modules/prisma/**/*"
+    ],
+    "extraResources": [
+      { "from": "server/prisma", "to": "prisma" },
+      { "from": "node_modules/.prisma/client", "to": "prisma-client" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DaJEssI Business"
+    },
+    "portable": {
+      "artifactName": "DaJEssI-Business-Portable-${version}.exe"
+    }
+  }
+}

@@ -1,0 +1,250 @@
+// =====================================================================================
+// DaJEssI Desktop — Prisma schema (SQLite, 100% offline)
+// =====================================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
+  engineType    = "library"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth ----------
+enum Role {
+  ADMINISTRATOR
+  EMPLOYEE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  fullName     String
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  purchases Purchase[]
+  sales     Sale[]
+  expenses  Expense[]
+  incomes   Income[]
+  stockMoves StockMovement[]
+
+  @@map("users")
+}
+
+// ---------- Module 1: Farmers ----------
+model Farmer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  village   String?
+  district  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+
+  @@map("farmers")
+}
+
+// ---------- Module 2: Suppliers ----------
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  address   String?
+  itemsSupplied String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+
+  @@map("suppliers")
+}
+
+// ---------- Module 3: Customers ----------
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  address   String?
+  customerType String @default("individual") // individual | wholesaler | retailer | institution
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("customers")
+}
+
+// ---------- Module 4: Purchases ----------
+enum PaymentStatus {
+  PAID
+  PARTIAL
+  UNPAID
+}
+
+model Purchase {
+  id              String        @id @default(uuid())
+  purchaseNumber  String        @unique
+  date            DateTime      @default(now())
+  farmerId        String?
+  farmer          Farmer?       @relation(fields: [farmerId], references: [id])
+  supplierId      String?
+  supplier        Supplier?     @relation(fields: [supplierId], references: [id])
+  riceType        String        @default("Paddy")
+  quantityKg      Float
+  unitPrice       Float
+  total           Float
+  paymentStatus   PaymentStatus @default(UNPAID)
+  amountPaid      Float         @default(0)
+  notes           String?
+  createdById     String?
+  createdBy       User?         @relation(fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  stockMoves StockMovement[]
+
+  @@map("purchases")
+}
+
+// ---------- Module 5: Sales ----------
+enum PaymentMethod {
+  CASH
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CREDIT
+}
+
+model Sale {
+  id             String        @id @default(uuid())
+  invoiceNumber  String        @unique
+  date           DateTime      @default(now())
+  customerId     String?
+  customer       Customer?     @relation(fields: [customerId], references: [id])
+  riceType       String        @default("Riz blanc")
+  quantityKg     Float
+  unitPrice      Float
+  discount       Float         @default(0)
+  total          Float
+  costPerKg      Float         @default(0)
+  profit         Float         @default(0)
+  paymentMethod  PaymentMethod @default(CASH)
+  notes          String?
+  createdById    String?
+  createdBy      User?         @relation(fields: [createdById], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  stockMoves StockMovement[]
+
+  @@map("sales")
+}
+
+// ---------- Module 6: Warehouse / Stock ----------
+enum StockMovementType {
+  ENTRY
+  EXIT
+}
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String
+  location    String?
+  capacityKg  Float    @default(0)
+  lowStockThresholdKg Float @default(500)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stockMoves StockMovement[]
+
+  @@map("warehouses")
+}
+
+model StockMovement {
+  id          String            @id @default(uuid())
+  date        DateTime          @default(now())
+  warehouseId String
+  warehouse   Warehouse         @relation(fields: [warehouseId], references: [id])
+  type        StockMovementType
+  riceType    String            @default("Riz blanc")
+  quantityKg  Float
+  reason      String?
+  purchaseId  String?
+  purchase    Purchase?         @relation(fields: [purchaseId], references: [id])
+  saleId      String?
+  sale        Sale?             @relation(fields: [saleId], references: [id])
+  createdById String?
+  createdBy   User?             @relation(fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now())
+
+  @@map("stock_movements")
+}
+
+// ---------- Module 7: Expenses ----------
+enum ExpenseCategory {
+  TRANSPORT
+  SALARY
+  FUEL
+  ELECTRICITY
+  RENT
+  MAINTENANCE
+  OTHER
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  date        DateTime        @default(now())
+  category    ExpenseCategory
+  description String
+  amount      Float
+  notes       String?
+  createdById String?
+  createdBy   User?           @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("expenses")
+}
+
+// ---------- Module 8: Income ----------
+enum IncomeSource {
+  SALES
+  OTHER
+}
+
+model Income {
+  id          String       @id @default(uuid())
+  date        DateTime     @default(now())
+  source      IncomeSource @default(OTHER)
+  description String
+  amount      Float
+  notes       String?
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("incomes")
+}
+
+// ---------- Module 10: Settings ----------
+model Setting {
+  key       String   @id
+  label     String
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
