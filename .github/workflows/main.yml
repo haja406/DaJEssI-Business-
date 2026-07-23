@@ -1,0 +1,51 @@
+name: Build Windows app
+
+# Runs automatically every time you push to GitHub, and can also be started
+# by hand from the "Actions" tab ("Run workflow" button). No local install
+# needed on your computer — everything happens on GitHub's servers.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Générer le client Prisma
+        run: npm run prisma:generate
+
+      - name: Créer les migrations de base de données (si absentes)
+        shell: bash
+        run: |
+          if [ -z "$(ls -A server/prisma/migrations 2>/dev/null)" ]; then
+            npx prisma migrate dev --schema=server/prisma/schema.prisma --name init --skip-seed
+          else
+            echo "Migrations déjà présentes — étape ignorée."
+          fi
+        env:
+          DATABASE_URL: file:./ci.db
+
+      - name: Compiler et générer l'installateur Windows (.exe) + la version portable
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publier les fichiers .exe générés
+        uses: actions/upload-artifact@v4
+        with:
+          name: DaJEssI-Business-Windows
+          path: |
+            release/*.exe
+          if-no-files-found: error
